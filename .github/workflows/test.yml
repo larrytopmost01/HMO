@@ -1,0 +1,40 @@
+name: Test Suite
+on: [push]
+env:
+  MAILGUN_API_KEY: ${{ secrets.MAILGUN_API_KEY }}
+  JWT_SECRET: 1dTUoobbtr5EMRvfVZHo1FX5yhj9q0of2s4HASfYQXC3KnQqa9f1JqrF5EJSdfI2
+  AUTH_PASSWORD: ${{ secrets.AUTH_PASSWORD }}
+jobs:
+  test:
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout to code repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.RETAILAR_PAT }}
+
+      - name: Setup PHP with Xdebug
+        uses: shivammathur/setup-php@v2
+        with:
+          php-version: "7.4"
+          coverage: xdebug
+
+      - name: Update dependencies in lock file
+        run: composer update
+
+      - name: Install dependencies
+        run: composer install
+
+      - name: Run tests
+        run: composer test
+
+      - name: Upload Code Coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.CODECOV_TOKEN }}
+          file: ./coverage.xml
+          flags: unittests
+          yml: ./codecov.yml
+          name: codecov-umbrella
+          fail_ci_if_error: true
+          verbose: true

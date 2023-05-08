@@ -1,0 +1,30 @@
+name: Database migrations for the staging database
+on:
+  pull_request:
+    branches: [develop]
+    types: [closed]
+env:
+  APP_ENV: testing
+jobs:
+  migrations:
+    if: github.event.pull_request.merged == true
+    runs-on: ubuntu-18.04
+    steps:
+      - name: Checkout to code repo
+        uses: actions/checkout@v2
+        with:
+          token: ${{ secrets.RETAILAR_PAT }}
+      - name: Work around permissions issue
+        run: git config --global --add safe.directory /var/www/html
+
+      - name: Update dependencies in lock file
+        run: composer update
+
+      - name: Install dependencies
+        run: composer install
+
+      - name: Set env variable for DATABASE_URL
+        run: echo "DATABASE_URL=${{ secrets.DATABASE_URL }}" >> $GITHUB_ENV
+
+      - name: Run DB Migrations for Test Database
+        run: php artisan migrate --no-interaction
